@@ -1,9 +1,16 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\Request;
+use \Cviebrock\EloquentSluggable\Services\SlugService;
+use Illuminate\Support\Str;
+use App\Jobs\PruneOldPostsJob;
+
 
 class PostController extends Controller
 {
@@ -18,7 +25,10 @@ class PostController extends Controller
 
     public function show($id)
     {
+        // dd($id);
+        $id2 = request()->id;
         $post = Post::where('id', $id)->first();
+        // dd($post);
         $allUsers = User::all();
     
         // $user = User::where('id', $id)->first();
@@ -47,14 +57,18 @@ class PostController extends Controller
         return view('post.create',['users'=>$users]);
     }
 
-    public function store()
+    public function store(StorePostRequest $request)
     {
         //get the form data
 //        $data = request()->all();
-//
+//      
         $title = request()->title;
         $description = request()->description;
         $postCreator = request()->post_creator;
+        
+        // $slug = SlugService::createSlug(Post::class, 'slug', $title);
+        
+
 
 //        $data = $request->all();
 
@@ -63,8 +77,9 @@ class PostController extends Controller
             'title' => $title,
             'description' => $description,
             'user_id' => $postCreator,
+            // 'slug' => Str::slug($title),
         ]);
-
+        // $slug = SlugService::createSlug(Post::class, 'slug', $title);
         //redirect to index route
         return to_route('posts.index');
     }
@@ -76,7 +91,7 @@ class PostController extends Controller
         $users =User::all();
         return view('post.edit' ,['post' => $post],['users'=>$users]);
     }
-    public function update($id)
+    public function update(UpdatePostRequest $request,$id)
     {
         // $post = Post::find($id);
         // $user = User::where('id', $post->user_id)->first();
@@ -97,8 +112,9 @@ class PostController extends Controller
             'title'=>$title,
             'description'=>$description,
             'user_id'=>$postCreator,
+            'slug' => Str::slug($title),
         ]);
-
+        // 
         return redirect()->route('posts.index');
     }
 
@@ -106,5 +122,10 @@ class PostController extends Controller
 
             Post::destroy($id);
         return redirect()->route('posts.index');
+    }
+
+    public function removeOldPosts() {
+        PruneOldPostsJob::dispatch();
+        return redirect()->route("posts.index");
     }
 }

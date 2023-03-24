@@ -17,17 +17,21 @@ use Illuminate\Support\Facades\Auth;
 // Route::get('/', function () {
 //     return view('welcome');
 // });
+Route::get('/posts', [PostController::class, 'index'])->name('posts.index')->middleware('auth');
+Route::group(['middleware'=>['auth'] ],function(){
+    Route::get('/posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
+    Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
+    Route::get("/posts/removeOld",[PostController::class, "removeOldPosts"]);
+    Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+    Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::put('/posts/{post}', [PostController::class,"update"])->name("posts.update");
+    Route::delete('/posts/{post}',[PostController::class,"destroy"])->name("posts.destroy");
+
+});
 
 
-Route::get('/posts', [PostController::class, 'index'])->name('posts.index');
-Route::get('/posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
-Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
-Route::get("/posts/removeOld",[PostController::class, "removeOldPosts"]);
-Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
-Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
-Route::put('/posts/{post}', [PostController::class,"update"])->name("posts.update");
-Route::delete('/posts/{post}',[PostController::class,"destroy"])->name("posts.destroy");
-// Route::del('/posts', [PostController::class,"update"])->name("posts.update");
+
+
 // Route::resource('posts', PostController::class)->middleware('auth');
 
 

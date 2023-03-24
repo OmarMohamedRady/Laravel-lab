@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use Illuminate\Support\Str;
 use App\Jobs\PruneOldPostsJob;
-
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
@@ -31,17 +31,7 @@ class PostController extends Controller
         // dd($post);
         $allUsers = User::all();
     
-        // $user = User::where('id', $id)->first();
-//        dd($id);
-        // $post =  [
-        //     'id' => 3,
-        //     'title' => 'Javascript',
-        //     'posted_by' => 'Ali',
-        //     'created_at' => '2022-08-01 10:00:00',
-        //     'description' => 'hello description',
-        // ];
-
-//        dd($post);
+    
             
         
 
@@ -59,28 +49,29 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request)
     {
-        //get the form data
-//        $data = request()->all();
-//      
+       
         $title = request()->title;
         $description = request()->description;
         $postCreator = request()->post_creator;
         
-        // $slug = SlugService::createSlug(Post::class, 'slug', $title);
         
-
-
-//        $data = $request->all();
-
-        //insert the form data in the database
-        Post::create([
+        $post = Post::create([
             'title' => $title,
             'description' => $description,
             'user_id' => $postCreator,
-            // 'slug' => Str::slug($title),
+            
+            
         ]);
-        // $slug = SlugService::createSlug(Post::class, 'slug', $title);
-        //redirect to index route
+
+       
+        if ($request->hasFile('image_path')) {
+            $image = $request->file('image_path');
+            $filename = $image->getClientOriginalName();
+            $path = Storage::putFileAs('posts', $image, $filename);
+            $post->image_path = $path;
+            $post->save();
+        }
+       
         return to_route('posts.index');
     }
 
@@ -93,17 +84,22 @@ class PostController extends Controller
     }
     public function update(UpdatePostRequest $request,$id)
     {
-        // $post = Post::find($id);
-        // $user = User::where('id', $post->user_id)->first();
         
-       
-        // $post->title = request()->title;
-        // $post->description = request()->description;
-        // $user->name = request()->post_creator;
-        
-        // // dd( $post->user->name );
-        // $post->save();
-        // $user->save();
+        $post = Post::findOrFail($id);
+
+        if ($request->hasFile('image_path')) {
+            if ($post->image_path) {
+                Storage::delete($post->image_path);
+            }
+            $image = $request->file('image_path');
+            $filename = $image->getClientOriginalName();
+            $path = Storage::putFileAs('posts', $image, $filename);
+            $post->image_path = $path;
+            $post->save();
+        }
+
+
+
         $title=request()->title;
         $description=request()->description;
         $postCreator=request()->post_creator;
@@ -120,7 +116,10 @@ class PostController extends Controller
 
     public function destroy($id){
 
-            Post::destroy($id);
+            // Post::destroy($id);
+        $post = Post::findOrFail($id);
+        Post::where('id', $id)->delete();
+        Storage::delete($post->image_path);
         return redirect()->route('posts.index');
     }
 

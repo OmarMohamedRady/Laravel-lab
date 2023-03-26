@@ -10,7 +10,7 @@
         <div class="card-body">
             <h5 class="card-title">Title: {{$post['title']}}</h5>
             <p class="card-text">Description: {{$post['description']}}</p>
-            <img src="{{asset($post->image_path)}}" alt="err">
+            <img src="{{asset('/storage/'.$post->image_path)}}" alt="err">
 
         
         </div>

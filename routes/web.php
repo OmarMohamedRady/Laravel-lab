@@ -3,6 +3,9 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
+use App\Models\User;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -40,3 +43,52 @@ Route::post('/comments', [CommentController::class, 'store'])->name('comments.st
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Route::get('/auth/github/redirect', function () {
+    return Socialite::driver('github')->redirect();
+});
+ 
+
+Route::get('/auth/github/callback', function () {
+    $githubUser= Socialite::driver('github')->user();
+
+    $user = User::updateOrCreate([
+        'github_id' => $githubUser->id,
+    ], [
+        'name' => $githubUser->name,
+        'email' => $githubUser->email,
+        'github_token' => $githubUser->token,
+        'github_refresh_token' => $githubUser->refreshToken,
+    ]);
+ 
+    Auth::login($user);
+ 
+    return redirect('/posts');
+ 
+    // $user->token
+});
+
+
+
+
+Route::get('/auth/google/redirect', function () {
+    return Socialite::driver('google')->redirect();
+});
+Route::get('/auth/google/callback', function () {
+    $googleUser= Socialite::driver('google')->user();
+
+    $user = User::updateOrCreate([
+        'github_id' => $googleUser->id,
+    ], [
+        'name' => $googleUser->name,
+        'email' => $googleUser->email,
+        'github_token' => $googleUser->token,
+        'github_refresh_token' => $googleUser->refreshToken,
+    ]);
+ 
+    Auth::login($user);
+ 
+    return redirect('/posts');
+ 
+    // $user->token
+});

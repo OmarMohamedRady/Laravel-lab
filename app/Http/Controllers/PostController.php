@@ -16,7 +16,7 @@ class PostController extends Controller
 {
     public function index()
     {
-        $allPosts = Post::paginate(10);
+        $allPosts = Post::with('user')-> paginate(10);
         
        
 
@@ -67,8 +67,11 @@ class PostController extends Controller
         if ($request->hasFile('image_path')) {
             $image = $request->file('image_path');
             $filename = $image->getClientOriginalName();
-            $path = Storage::putFileAs('posts', $image, $filename);
-            $post->image_path = $path;
+            // $path = Storage::putFileAs('posts', $image, $filename);
+            // $post->image_path = $path;
+
+            $path = $request->file('image_path')->storeAs('posts', $filename, 'public');
+            $post->image_path= $path;
             $post->save();
         }
        
@@ -89,12 +92,12 @@ class PostController extends Controller
 
         if ($request->hasFile('image_path')) {
             if ($post->image_path) {
-                Storage::delete($post->image_path);
+                Storage::delete("public/" . $post->image_path);
             }
             $image = $request->file('image_path');
             $filename = $image->getClientOriginalName();
-            $path = Storage::putFileAs('posts', $image, $filename);
-            $post->image_path = $path;
+            $path = $request->file('image_path')->storeAs('posts', $filename, 'public');
+            $post->image_path= $path;
             $post->save();
         }
 
@@ -118,6 +121,9 @@ class PostController extends Controller
 
             // Post::destroy($id);
         $post = Post::findOrFail($id);
+        if ($post->image_path && Storage::exists("public/" . $post->image_path)) {
+            Storage::delete("public/" . $post->image_path);
+        }
         Post::where('id', $id)->delete();
         Storage::delete($post->image_path);
         return redirect()->route('posts.index');
